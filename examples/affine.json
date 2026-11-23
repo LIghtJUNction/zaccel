@@ -1,0 +1,11 @@
+{
+  "shader": "affine.wgsl",
+  "entry": "main",
+  "dispatch": [16, 1, 1],
+  "buffers": [
+    {"group": 0, "binding": 0, "kind": "storage_read", "input": "data/a.bin"},
+    {"group": 0, "binding": 1, "kind": "storage_read", "input": "data/b.bin"},
+    {"group": 0, "binding": 2, "kind": "storage_read_write", "size": 4096, "output": "data/affine.bin"},
+    {"group": 1, "binding": 0, "kind": "uniform", "input": "data/params.bin"}
+  ]
+}

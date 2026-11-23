@@ -1,0 +1,66 @@
+name: Offline checks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: offline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: target/debug/zaccel
+          - os: windows-latest
+            binary: target/debug/zaccel.exe
+          - os: macos-latest
+            binary: target/debug/zaccel
+    defaults:
+      run:
+        shell: bash
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Install the repository toolchain
+        run: |
+          rustup show
+          rustup component add rustfmt clippy
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Check Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Run CPU-only tests
+        run: |
+          cargo test --locked --all-targets
+          python -m unittest discover -s scripts -p 'test_*.py' -v
+      - name: Build the CLI and validate shipped WGSL without a GPU
+        env:
+          ZACCEL_BINARY: ${{ matrix.binary }}
+        run: |
+          cargo build --locked
+          python scripts/acceptance.py --bin "$ZACCEL_BINARY" --report "$RUNNER_TEMP/zaccel-offline.json"
+      - name: Preserve the actual offline report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: offline-${{ matrix.os }}
+          path: ${{ runner.temp }}/zaccel-offline.json
+          if-no-files-found: warn
+          retention-days: 14

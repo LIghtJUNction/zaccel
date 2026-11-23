@@ -1,0 +1,5 @@
+/target/
+/artifacts/
+*.tmp
+/scripts/__pycache__/
+/COORDINATION.md

@@ -1,0 +1,24 @@
+[package]
+name = "zaccel"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100"
+description = "Run bounded WGSL compute scripts on native GPUs"
+license = "MIT"
+repository = "https://github.com/LIghtJUNction/zaccel"
+keywords = ["gpu", "wgsl", "compute", "cli"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+wgpu = { version = "30.0.1", default-features = false, features = ["std", "wgsl", "vulkan", "dx12", "metal"] }
+naga = { version = "30.0.1", features = ["wgsl-in"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[profile.dev]
+debug = 0
+
+[profile.release]
+opt-level = 2
+lto = false
+strip = true

@@ -1,0 +1,39 @@
+name: Explicit GPU acceptance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zaccel-gpu-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  hardware:
+    runs-on: [self-hosted, linux, x64, zaccel-gpu]
+    timeout-minutes: 30
+    env:
+      CARGO_TARGET_DIR: /var/tmp/project-z-cargo-target
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build and run real GPU cases under the shared Cargo lock
+        shell: bash
+        run: |
+          mkdir -p "$CARGO_TARGET_DIR"
+          flock "$CARGO_TARGET_DIR/.project-z-cargo-owner.lock" bash -euo pipefail -c '
+            cargo build --release --locked
+            python3 scripts/acceptance.py --bin "$CARGO_TARGET_DIR/release/zaccel" --require-gpu --report "$RUNNER_TEMP/zaccel-gpu.json"
+          '
+      - name: Preserve hardware acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gpu-acceptance-${{ github.run_id }}
+          path: ${{ runner.temp }}/zaccel-gpu.json
+          if-no-files-found: warn
+          retention-days: 30
