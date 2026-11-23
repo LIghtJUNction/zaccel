@@ -876,7 +876,13 @@ mod tests {
         assert_eq!(job.plan.dispatch, [2, 1, 1]);
         assert_eq!(job.plan.buffers[2].kind, BufferKind::Uniform);
         assert_eq!(job.plan.buffers[2].size, 16);
-        assert_eq!(job.outputs[0].path, fixture.path("result.bin"));
+        // The planner canonicalizes the existing parent. macOS /var and
+        // Windows short/extended paths may name it differently from temp_dir.
+        let expected_parent = fs::canonicalize(&fixture.0).unwrap();
+        assert_eq!(
+            Path::new(&job.outputs[0].path),
+            expected_parent.join("result.bin")
+        );
     }
 
     #[test]

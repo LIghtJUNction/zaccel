@@ -31,10 +31,10 @@ The runner labels follow the [GitHub-hosted runner reference](https://docs.githu
 To exercise packaging locally after a build:
 
 ```sh
-python3 scripts/package_release.py check-version --tag v0.1.0
+python3 scripts/package_release.py check-version --tag v0.1.1
 python3 scripts/package_release.py package \
   --binary /path/to/built/zaccel \
-  --target x86_64-unknown-linux-gnu --tag v0.1.0 \
+  --target x86_64-unknown-linux-gnu --tag v0.1.1 \
   --output /tmp/zaccel-release
 python3 scripts/package_release.py checksums /tmp/zaccel-release
 ```
